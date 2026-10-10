@@ -1,0 +1,47 @@
+# GPU and CPU temperature alerts for homelab hosts.
+# GPU: DCGM (Linux) and nvidia_gpu_exporter (Windows).
+# CPU: node_exporter hwmon/thermal_zone (Linux only; see docs/TEMPERATURE_ALERTS.md).
+groups:
+  - name: homelab.temperature.gpu
+    interval: 10s
+    rules:
+      - alert: GpuTemperatureHigh
+        expr: |
+          (
+            DCGM_FI_DEV_GPU_TEMP > 70
+            or nvidia_smi_temperature_gpu > 70
+          )
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "GPU above 70C for 5m ({{ $labels.instance }})"
+          description: >-
+            GPU temperature on {{ $labels.instance }} (job {{ $labels.job }}) has been
+            above 70C for 5 minutes. Current: {{ $value | printf "%.0f" }}C.
+
+  - name: homelab.temperature.cpu
+    interval: 10s
+    rules:
+      - alert: CpuTemperatureHigh
+        expr: |
+          (
+            max by (instance) (
+              node_hwmon_temp_celsius{chip=~"platform_coretemp.*"}
+              or node_thermal_zone_temp{type="x86_pkg_temp"}
+              or (
+                node_hwmon_temp_celsius
+                * on(instance, chip) group_left(chip_name)
+                node_hwmon_chip_names{chip_name=~"k10temp|zenpower"}
+              )
+            )
+            or max by (instance) (ohm_cpu_celsius{sensor!~".*Distance.*"})
+          ) > 75
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU above 75C for 10m ({{ $labels.instance }})"
+          description: >-
+            Linux CPU package/core temperature on {{ $labels.instance }} has been
+            above 75C for 10 minutes. Current max: {{ $value | printf "%.0f" }}C.

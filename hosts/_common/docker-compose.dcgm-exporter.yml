@@ -1,0 +1,19 @@
+# NVIDIA DCGM exporter for Prometheus (Linux hosts with Docker + NVIDIA Container Toolkit).
+# Official: https://docs.nvidia.com/datacenter/dcgm/latest/gpu-telemetry/dcgm-exporter.html
+#
+# Publishes :9400/metrics (DCGM_FI_DEV_GPU_TEMP, DCGM_FI_DEV_MEMORY_TEMP, util, VRAM, ...).
+# Run via hosts/_common/setup-dcgm-exporter.sh from a host folder.
+#
+# Firewall: allow TCP 9400 from 192.0.2.10 (Prometheus).
+
+name: alfa-dcgm-exporter
+
+services:
+  dcgm-exporter:
+    image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.9-3.6.1-ubuntu22.04
+    container_name: ${ALFA_DCGM_CONTAINER_NAME:-alfa-dcgm-exporter}
+    restart: unless-stopped
+    privileged: true
+    gpus: all
+    ports:
+      - '9400:9400'

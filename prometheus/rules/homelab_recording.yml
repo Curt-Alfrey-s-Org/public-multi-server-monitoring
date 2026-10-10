@@ -1,0 +1,39 @@
+# Pre-aggregates for Grafana "Prometheus deep health" dashboard (fast queries).
+groups:
+  - name: homelab.recording
+    interval: 10s
+    rules:
+      - record: homelab:up:sum
+        expr: sum(up)
+
+      - record: homelab:up:count
+        expr: count(up)
+
+      - record: homelab:up:fraction
+        expr: sum(up) / count(up)
+
+      # scrape_duration_seconds is a per-target gauge (seconds)
+      - record: homelab:scrape_duration_seconds:mean_5m
+        expr: avg by (job) (avg_over_time(scrape_duration_seconds[5m]))
+
+      # scrape_samples_scraped is a GAUGE (samples in the last scrape), so rate()
+      # was meaningless; sum the 5m average per job instead (samples per scrape).
+      - record: homelab:scrape_samples_scraped:sum5m
+        expr: sum by (job) (avg_over_time(scrape_samples_scraped[5m]))
+
+      - record: homelab:probe_success:avg5m
+        expr: avg by (job, instance) (avg_over_time(probe_success[5m]))
+
+      - record: homelab:cpu_temperature_celsius
+        expr: |
+          max by (instance) (
+            ipmi_temperature_celsius{name=~"(?i)(TEMP_CPU|CPU.*|.*CPU.*)"}
+            or node_hwmon_temp_celsius{chip=~"platform_coretemp.*"}
+            or node_thermal_zone_temp{type="x86_pkg_temp"}
+            or (
+              node_hwmon_temp_celsius
+              * on(instance, chip) group_left(chip_name)
+              node_hwmon_chip_names{chip_name=~"k10temp|zenpower"}
+            )
+            or ohm_cpu_celsius{sensor!~".*Distance.*"}
+          )

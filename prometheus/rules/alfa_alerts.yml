@@ -1,0 +1,63 @@
+# ALFa — alerts backed by metrics this Prometheus actually scrapes.
+#
+# Cleaned 2026-06-09 (NEXT_STEPS.md Phase 0 item 4). The previous version of
+# this file carried 13 alerts for an "alfa-api-staging" deployment
+# (alfa_prediction_*, alfa_brier_score, alfa_cache_*, alfa_anomaly_*,
+# alfa_model_load_time_seconds, up{job="alfa-api"},
+# pg_stat_statements_total_time, container_*{container_name=~"alfa-.*"}).
+# No scrape job in prometheus/prometheus.yml provides any of those series, so
+# none of them could ever fire — silent drift. They were removed, not fixed,
+# because the staging deployment they referenced no longer exists; the ALFa
+# brain now runs on  and its liveness is covered by the blackbox-http-lan
+# probes (http://192.0.2.10:8420/health, :8413/health/liveliness) +
+# BlackboxProbeFailed in homelab_alerts.yml. If brain app metrics get a scrape
+# job later (NEXT_STEPS.md Phase 4), reintroduce app-level alerts against the
+# real metric names then.
+#
+# job postgres-alfa is commented out in prometheus.yml. Brain Postgres/Redis
+# on  are scraped as postgres-alfa-brain / redis-alfa-brain.
+
+groups:
+  - name: alfa_brain_postgres
+    interval: 1m
+    rules:
+      - alert: AlfaBrainPostgresDown
+        expr: pg_up{job="postgres-alfa-brain"} == 0
+        for: 1h
+        labels:
+          severity: critical
+          service: alfa-brain-postgres
+        annotations:
+          summary: "Brain Postgres () unreachable from its exporter"
+          description: >-
+            postgres-exporter on  cannot connect to loopback :5540.
+            Check alfa-ai-postgres and hosts/192.0.2.10 brain exporters.
+
+      - alert: AlfaBrainPostgresConnectionPoolHigh
+        expr: |
+          sum by (instance) (pg_stat_activity_count{job="postgres-alfa-brain"})
+            / on (instance) pg_settings_max_connections{job="postgres-alfa-brain"} > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          service: alfa-brain-postgres
+        annotations:
+          summary: "Brain Postgres connection pool > 90% on "
+          description: >-
+            Connections on {{ $labels.instance }} are at
+            {{ $value | humanizePercentage }} of max_connections.
+
+  - name: alfa_brain_redis
+    interval: 1m
+    rules:
+      - alert: AlfaBrainRedisDown
+        expr: redis_up{job="redis-alfa-brain"} == 0
+        for: 1h
+        labels:
+          severity: critical
+          service: alfa-brain-redis
+        annotations:
+          summary: "Brain Redis () unreachable from its exporter"
+          description: >-
+            redis-exporter on  cannot connect to loopback :6390.
+            Check alfa-ai-redis and hosts/192.0.2.10 brain exporters.

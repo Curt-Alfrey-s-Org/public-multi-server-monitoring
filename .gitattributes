@@ -1,0 +1,3 @@
+# Shell scripts must stay LF for Linux operators (avoid bash\r shebang failures).
+* text=auto
+*.sh text eol=lf

@@ -1,0 +1,25 @@
+# Dozzle agent for remote Docker hosts (central UI on 192.0.2.10:8888).
+# Official: https://dozzle.dev/guide/agent
+#
+# Publish :7007 on the LAN; restrict inbound to 192.0.2.10 (see docs/DOZZLE_FLEET.md).
+
+name: dozzle-agent
+
+services:
+  dozzle-agent:
+    image: amir20/dozzle:v10.6.15
+    container_name: dozzle-agent
+    command: agent
+    restart: unless-stopped
+    environment:
+      DOZZLE_HOSTNAME: ${DOZZLE_AGENT_HOSTNAME:?set DOZZLE_AGENT_HOSTNAME}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "${DOZZLE_AGENT_PUBLISH:-7007:7007}"
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

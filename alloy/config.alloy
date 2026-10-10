@@ -1,0 +1,43 @@
+// Docker logs -> Loki (Grafana Alloy)
+// Official: map __meta_docker_* before Loki ingest, or service_name is unknown_service.
+// https://grafana.com/
+// https://grafana.com/docs/alloy/latest/reference/components/discovery/discovery.docker/
+
+logging {
+	level  = "info"
+	format = "logfmt"
+}
+
+loki.write "default" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}
+
+discovery.docker "linux" {
+	host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "docker_logs" {
+	targets = []
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "service_name"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		regex         = "(.+)"
+		target_label  = "service_name"
+	}
+}
+
+loki.source.docker "containers" {
+	host          = "unix:///var/run/docker.sock"
+	targets       = discovery.docker.linux.targets
+	labels        = {"log_source" = "docker"}
+	relabel_rules = discovery.relabel.docker_logs.rules
+	forward_to    = [loki.write.default.receiver]
+}

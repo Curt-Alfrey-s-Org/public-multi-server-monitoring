@@ -1,0 +1,220 @@
+# Central monitoring stack on 192.0.2.10 (Grafana VM).
+# Clone: /home/operator/monitoring
+#
+# Full port matrix: see PORTS.md in this directory.
+#
+# Host ports:
+#   Prometheus     http://192.0.2.10:9092  (container :9090)
+#   Grafana        http://192.0.2.10:3000
+#   Alertmanager   http://192.0.2.10:9093
+#   blackbox       http://192.0.2.10:9115
+#   Loki           http://192.0.2.10:3100
+#   Alloy UI       http://192.0.2.10:12345
+#   cAdvisor       http://192.0.2.10:8081
+#   Dozzle         http://192.0.2.10:8888
+#
+# App DB/API metrics: per-host exporters on member hosts (see hosts/192.0.2.10/).
+# Prometheus scrapes LAN IP:port only -- no external Docker networks on this host.
+
+name: monitoring
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    container_name: monitoring-prometheus
+    user: "65534:65534"
+    restart: unless-stopped
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/scrape-targets.example.yml:/etc/prometheus/scrape-targets.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - ./prometheus/secrets:/etc/prometheus/secrets:ro
+      - ./data/prometheus:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - monitoring_internal
+
+  grafana:
+    image: grafana/grafana:13.0.9
+    container_name: monitoring-grafana
+    user: "472:0"
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        rm -rf /var/lib/grafana/plugins/grafana-loki-datasource \
+               /var/lib/grafana/plugins/grafana-loki-datasource-* 2>/dev/null || true
+        exec /run.sh
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in monitoring/.env (see .env.example)}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://127.0.0.1:3000}
+      - GF_INSTALL_PLUGINS=
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/homelab_launcher.json
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - monitoring_internal
+
+  alertmanager:
+    image: prom/alertmanager:v0.34.1
+    container_name: monitoring-alertmanager
+    user: "65534:65534"
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./secrets:/etc/alertmanager/secrets:ro
+      - ./data/alertmanager:/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+      - "--web.external-url=http://127.0.0.1:9093"
+    networks:
+      - monitoring_internal
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.28.0
+    container_name: monitoring-blackbox
+    restart: unless-stopped
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command:
+      - "--config.file=/etc/blackbox_exporter/config.yml"
+    cap_add:
+      - NET_RAW
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - monitoring_internal
+
+  loki:
+    image: grafana/loki:3.7.8
+    container_name: monitoring-loki
+    user: "10001:10001"
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - ./data/loki:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    networks:
+      - monitoring_internal
+
+  alloy:
+    image: grafana/alloy:v1.20.0
+    container_name: monitoring-alloy
+    restart: unless-stopped
+    ports:
+      - "12345:12345"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    depends_on:
+      - loki
+    networks:
+      - monitoring_internal
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.57.0
+    container_name: monitoring-cadvisor
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - monitoring_internal
+
+
+  ipmi-exporter:
+    image: prometheuscommunity/ipmi-exporter:v1.10.1
+    container_name: monitoring-ipmi-exporter
+    restart: unless-stopped
+    profiles: [ipmi]
+    ports:
+      - "9290:9290"
+    volumes:
+      - ./prometheus/secrets/ipmi_remote.yml:/config.yml:ro
+    command:
+      - --config.file=/config.yml
+      - --web.listen-address=:9290
+    networks:
+      - monitoring_internal
+
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    container_name: monitoring-node-exporter
+    restart: unless-stopped
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - monitoring_internal
+
+  dozzle:
+    image: amir20/dozzle:v10.6.15
+    container_name: monitoring-dozzle
+    restart: unless-stopped
+    ports:
+      - "8888:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/dozzle:/data
+    environment:
+      DOZZLE_AUTH_PROVIDER: simple
+      DOZZLE_AUTH_TTL: 48h
+      DOZZLE_ENABLE_SHELL: "false"
+      DOZZLE_ENABLE_ACTIONS: "false"
+      DOZZLE_HOSTNAME: monitoring-107
+      DOZZLE_REMOTE_AGENT: ${DOZZLE_REMOTE_AGENT:-}
+    networks:
+      - monitoring_internal
+
+networks:
+  monitoring_internal:
+    driver: bridge
+    name: monitoring_internal

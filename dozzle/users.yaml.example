@@ -1,0 +1,16 @@
+# Copy to data/dozzle/users.yaml on 192.0.2.10 (gitignored under data/).
+# Generate a bcrypt hash:
+#   docker run -it --rm amir20/dozzle:v10.6.15 generate operator \
+#     --password 'YOUR_PASSWORD' --email ops@local --name 'Operator'
+#
+# Or run: ./scripts/setup-dozzle-auth.sh
+#
+# Docs: https://dozzle.dev/guide/authentication
+
+users:
+  operator:
+    email: ops@local
+    name: Operator
+    password: CHANGEME_RUN_setup-dozzle-auth.sh
+    roles:
+      - download

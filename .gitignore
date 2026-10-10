@@ -1,0 +1,20 @@
+# Runtime data (TSDB, Grafana DB, Loki chunks)
+/data/
+
+# Local secrets (defaults live in *.example; copy when needed)
+/exporters/postgres-rankings.env
+/exporters/postgres-alfa.env
+/exporters/postgres-rv.env
+/exporters/mysql-alfa.env
+/exporters/mysql-uspbf.env
+
+*.secret
+.env
+!.env.example
+
+# Local backups (scripts/backup-data.sh output)
+/backups/
+
+# Alertmanager secrets (SMTP password, healthchecks.io ping URL)
+/secrets/*
+!/secrets/README.md

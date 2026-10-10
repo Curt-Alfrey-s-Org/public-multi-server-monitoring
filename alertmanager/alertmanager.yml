@@ -1,0 +1,119 @@
+# Alertmanager — http://192.0.2.10:9093
+# Reload: curl -X POST http://127.0.0.1:9093/-/reload
+# Validate: docker run --rm -v "$PWD/alertmanager:/cfg:ro" -v "$PWD/secrets:/etc/alertmanager/secrets:ro" \
+#             --entrypoint amtool prom/alertmanager:v0.34.1 check-config /cfg/alertmanager.yml
+#
+# Chosen channels (operator decisions 2026-06-09, 2026-08-07, 2026-09-25;
+# see docs/ALERT_EMAIL_POLICY.md):
+#   * Default delivery  = alfa-ai webhook        -> receiver 'alfa-ai-webhook'
+#                         (every warning/critical alert; no email)
+#   * Temperature       = EMAIL (SMTP) + webhook -> receiver 'email-ops'
+#   * Dead-man's-switch = healthchecks.io        -> receiver 'healthchecks-watchdog'
+#   * severity info/none = 'null' sink (Alertmanager UI only)
+#
+# ============================================================================
+# OPERATOR CHECKLIST (Phase 0 alert delivery):
+# ============================================================================
+#  [x] 1. SMTP relay — SMTP smtp.example.com:587,
+#         operator@example.com (from example-site-perch ALFA mail).
+#  [x] 2. secrets/smtp_password — synced from example-site-perch ALFA_SMTP_APP_PASSWORD.
+#  [ ] 3. secrets/healthchecks_ping_url — create check at healthchecks.io
+#         (Period 5m / Grace 5m) if not already a real ping URL.
+#  [ ] 4. Validate + reload Alertmanager; confirm email in operator@example.com inbox.
+#         Test: amtool alert add MonitoringPhase0Test severity=critical --alertmanager.url=http://127.0.0.1:9093
+#  [x] 5. alfa-ai webhook -> POST http://192.0.2.10:8420/alfa-ai/api/internal/alerts
+# ============================================================================
+
+global:
+  resolve_timeout: 5m
+  # --- SMTP SMTP (operator@example.com) ------------
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'operator@example.com'
+  smtp_auth_username: 'operator@example.com'
+  # Mutually exclusive with smtp_auth_password; mounted from ./secrets (compose).
+  smtp_auth_password_file: '/etc/alertmanager/secrets/smtp_password'
+  smtp_require_tls: true
+
+route:
+  # 2026-08-07: only temperature alerts EMAIL (see docs/ALERT_EMAIL_POLICY.md).
+  # 2026-09-25: every other alert (warning/critical) goes to the alfa-ai webhook
+  # by default instead of the 'null' sink, so the brain on  sees host/service
+  # down, backup, probe, etc. alerts. Email policy is unchanged.
+  receiver: 'alfa-ai-webhook'
+  group_by: ['alertname', 'job']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    # Dead-man's-switch: continuous pulse to healthchecks.io. Must stay ABOVE
+    # the email routes. healthchecks.io check: Period 5m / Grace 5m.
+    - receiver: 'healthchecks-watchdog'
+      matchers:
+        - alertname = "Watchdog"
+      group_wait: 0s
+      group_interval: 2m
+      repeat_interval: 2m
+
+    # info/none-severity noise stays silent (Watchdog is matched above).
+    - receiver: 'null'
+      matchers:
+        - severity =~ "info|none"
+
+    # Temperature only (warning) -> email + alfa-ai webhook. Official matchers:
+    # https://prometheus.io/docs/alerting/latest/configuration/
+    - receiver: 'email-ops'
+      matchers:
+        - alertname =~ "GpuTemperatureHigh|CpuTemperatureHigh"
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+
+receivers:
+  - name: 'email-ops'
+    email_configs:
+      - to: 'operator@example.com'
+        send_resolved: true
+        # from/smarthost/auth inherit from global smtp_* above.
+    webhook_configs:
+      - url: 'http://192.0.2.10:8420/alfa-ai/api/internal/alerts'
+        send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials_file: '/etc/alertmanager/secrets/alfa_ai_webhook_token'
+
+  # Default receiver: alfa-ai brain webhook only (no email).
+  - name: 'alfa-ai-webhook'
+    webhook_configs:
+      - url: 'http://192.0.2.10:8420/alfa-ai/api/internal/alerts'
+        send_resolved: true
+        http_config:
+          authorization:
+            type: Bearer
+            credentials_file: '/etc/alertmanager/secrets/alfa_ai_webhook_token'
+
+  # Watchdog -> healthchecks.io ping endpoint. url_file (documented in the
+  # Alertmanager configuration manual, mutually exclusive with url) keeps the
+  # secret-ish ping UUID out of git. send_resolved off: Watchdog never
+  # resolves by design; healthchecks.io only needs the periodic POST.
+  - name: 'healthchecks-watchdog'
+    webhook_configs:
+      - url_file: '/etc/alertmanager/secrets/healthchecks_ping_url'
+        send_resolved: false
+        max_alerts: 1
+
+  # Sink for info-level noise.
+  - name: 'null'
+
+inhibit_rules:
+  # A firing critical alert silences warning-level alerts for the same
+  # alertname/job/instance (avoids double-paging on escalation).
+  # NOTE: cross-host inhibition (e.g. ICMP-unreachable host suppressing
+  # TargetDown for services on it) is NOT configured — scrape jobs use friendly
+  # instance names ("hub-111") while ICMP probes use IPs, so no shared
+  # label exists to join on. Revisit if instance labels are ever unified.
+  - source_matchers:
+      - severity = "critical"
+    target_matchers:
+      - severity = "warning"
+    equal: ['alertname', 'job', 'instance']

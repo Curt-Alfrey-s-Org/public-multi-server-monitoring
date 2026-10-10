@@ -1,0 +1,25 @@
+# Loki uses built-in datasource type "loki" (no Grafana Marketplace plugin).
+# If the UI mentions a "Loki plugin" version error, remove any legacy
+# grafana-loki-datasource folder under data/grafana/plugins and recreate Grafana.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: 10s
+      httpMethod: POST
+
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+    jsonData:
+      maxLines: 1000

@@ -1,0 +1,176 @@
+# Stack hygiene — tune `for` / thresholds if noisy on your network.
+groups:
+  - name: homelab.meta
+    interval: 10s
+    rules:
+      # Dead-man's-switch: always firing by design (vector(1)). Alertmanager
+      # routes it to the 'watchdog' receiver (see alertmanager/alertmanager.yml).
+      # Point that receiver at an external heartbeat service (healthchecks.io,
+      # Dead Man's Snitch, or a cron on ) that alarms when pings STOP —
+      # that is the only way to notice this whole stack (or ) being down.
+      # Standard practice per Google SRE Workbook (meta-monitoring) and the
+      # kube-prometheus Watchdog rule.
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: Alerting pipeline heartbeat (always firing)
+          description: >-
+            This alert is always firing to prove the Prometheus →
+            Alertmanager → receiver pipeline works. If an external heartbeat
+            service stops receiving it, the monitoring stack itself is down.
+
+  - name: homelab.prometheus
+    interval: 10s
+    rules:
+      - alert: PrometheusConfigNotLoaded
+        expr: prometheus_config_last_reload_successful{job="prometheus"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Prometheus configuration reload failed
+          description: Check Prometheus logs and /etc/prometheus/prometheus.yml syntax.
+
+      - alert: PrometheusNotificationFailures
+        expr: rate(prometheus_notifications_errors_total{job="prometheus"}[15m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Prometheus failing to notify Alertmanager
+          description: "Check connectivity to alertmanager and AM config. Rate: {{ $value | printf \"%.3f\" }} /s"
+
+  - name: homelab.scrape_health
+    interval: 10s
+    rules:
+      # Opportunistic Windows workers reboot often — see homelab.windows_workers below.
+      - alert: TargetDown
+        expr: up{job!="windows-exporter-remote",job!="alfa-ai-incident-metrics",instance!~"example-"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Scrape target down ({{ $labels.job }} / {{ $labels.instance }})"
+          description: Prometheus has not successfully scraped this target for 10m. Investigate the service or DNS/network from the Prometheus container.
+
+  # Windows hosts (///) run windows_exporter on :9182.
+  # Longer `for:` than TargetDown — brief reboots should not page.
+  # These four hosts ARE the whole windows-exporter-remote job, so the old
+  # `instance!~"example-"` exclusion made both rules impossible to fire.
+  # TargetDown / ICMP keep the opportunistic-host exclusion (short outages are
+  # noise); these long-`for:` rules are the only Windows host-down signal and go
+  # to the alfa-ai webhook, never email (docs/OPPORTUNISTIC_WINDOWS_HOST_DOWN.md).
+  - name: homelab.windows_workers
+    interval: 10s
+    rules:
+      - alert: WindowsWorkerDown
+        expr: up{job="windows-exporter-remote"} == 0
+        for: 45m
+        labels:
+          severity: warning
+          host_role: windows-worker
+        annotations:
+          summary: "Windows worker metrics down ({{ $labels.instance }})"
+          description: >-
+            windows_exporter on {{ $labels.instance }} ({{ $labels.host_os }})
+            has been unreachable for 45m. Host may be offline, firewall may
+            block :9182 from , or the exporter service is stopped. Workers
+            reboot often — this alert waits longer than TargetDown.
+
+      - alert: WindowsWorkerDownExtended
+        expr: up{job="windows-exporter-remote"} == 0
+        for: 6h
+        labels:
+          severity: critical
+          host_role: windows-worker
+        annotations:
+          summary: "Windows worker offline 6h+ ({{ $labels.instance }})"
+          description: >-
+            {{ $labels.instance }} has not exported metrics for 6h. llama.cpp
+            RPC shard capacity may be reduced — investigate host power, WSL, and
+            windows_exporter service.
+
+  # Blackbox probe failures never fire TargetDown (the blackbox exporter target
+  # itself stays up) — alert on probe_success directly.
+  - name: homelab.probes
+    interval: 10s
+    rules:
+      - alert: BlackboxProbeFailedPublic
+        expr: probe_success{probe_kind="public"} == 0
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Public endpoint probe failing ({{ $labels.instance }})"
+          description: >-
+            Blackbox probe of {{ $labels.instance }} (job {{ $labels.job }})
+            has failed for 1h. Public site is likely down for visitors.
+
+      - alert: BlackboxProbeFailed
+        expr: probe_success{probe_kind=~"lan|homelab-ui"} == 0
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Probe failing ({{ $labels.instance }})"
+          description: >-
+            Blackbox probe of {{ $labels.instance }} (job {{ $labels.job }},
+            kind {{ $labels.probe_kind }}) has failed for 1h.
+
+      # ICMP host-reachability probes carry no probe_kind label.
+      - alert: BlackboxIcmpHostUnreachable
+        expr: probe_success{job="blackbox-icmp",instance!~"example-"} == 0
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host unreachable via ICMP ({{ $labels.instance }})"
+          description: "{{ $labels.instance }} has not answered ping for 1h."
+
+      - alert: BlackboxSslCertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry{probe_kind="public"} - time() < 14 * 24 * 3600
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "TLS certificate expires in <14d ({{ $labels.instance }})"
+          description: >-
+            Certificate for {{ $labels.instance }} expires in
+            {{ $value | humanizeDuration }}. Renew before it lapses.
+
+      # Petals retired (alfa-ai llama-cpp-rpc-only); its probe job and blackbox
+      # module were removed 2026-09-25.
+
+  - name: homelab.brain_backup
+    interval: 1m
+    rules:
+      # Requires node_exporter on  to read the textfile dir
+      # /mnt/HDDs/Alfa-AI/backups/postgres/metrics (mounted as /textfile-pgbackup
+      # in hosts/192.0.2.10/docker-compose.host-metrics.yml; override with
+      # ALFA_AI_PG_BACKUP_METRICS_DIR). Deploy: setup-brain-exporters.sh.
+      - alert: AlfaPostgresBackupStale
+        expr: (time() - alfa_ai_pg_backup_last_success_timestamp_seconds{instance="hub-111"}) > 100000
+        for: 15m
+        labels:
+          severity: warning
+          service: alfa-postgres-backup
+        annotations:
+          summary: "Brain Postgres backup stale on "
+          description: >-
+            Last verified pg_dump on  was more than ~28h ago. Check
+            alfa-ai-postgres-backup sidecar logs and
+            /mnt/HDDs/Alfa-AI/backups/postgres/metrics/alfa_ai_pg_backup.prom.
+
+      - alert: AlfaPostgresBackupFailed
+        expr: alfa_ai_pg_backup_last_run_exit_code{instance="hub-111"} != 0
+        for: 15m
+        labels:
+          severity: warning
+          service: alfa-postgres-backup
+        annotations:
+          summary: "Brain Postgres backup last run failed on "
+          description: >-
+            alfa_ai_pg_backup_last_run_exit_code is {{ $value }}. Inspect
+            docker logs for alfa-ai-postgres-backup on .

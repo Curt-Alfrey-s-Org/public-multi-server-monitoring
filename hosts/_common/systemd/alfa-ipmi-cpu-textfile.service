@@ -1,0 +1,8 @@
+[Unit]
+Description=Write IPMI temperature sensors for Prometheus textfile collector
+After=local-fs.target
+
+[Service]
+Type=oneshot
+Environment=ALFA_IPMI_TEXTFILE_DIR=/var/lib/alfa-monitoring/textfile
+ExecStart=/mnt/HDDs/Alfa-AI/monitoring/bin/alfa-write-ipmi-temps-textfile.sh

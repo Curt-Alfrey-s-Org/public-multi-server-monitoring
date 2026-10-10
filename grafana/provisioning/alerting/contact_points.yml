@@ -1,0 +1,9 @@
+# Minimal provisioning so /etc/grafana/provisioning/alerting exists.
+# Manage real contact points in the UI or extend this file later.
+apiVersion: 1
+
+contactPoints: []
+
+policies: []
+
+muteTimings: []

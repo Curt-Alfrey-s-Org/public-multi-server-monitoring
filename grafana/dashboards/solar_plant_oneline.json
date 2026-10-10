@@ -1,0 +1,3299 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [
+    {
+      "title": "HA Energy",
+      "type": "link",
+      "url": "http://192.0.2.10:8123/energy",
+      "targetBlank": true
+    },
+    {
+      "title": "HA Site solar",
+      "type": "link",
+      "url": "http://192.0.2.10:8123/site-solar",
+      "targetBlank": true
+    },
+    {
+      "title": "Node-RED computed",
+      "type": "link",
+      "url": "http://192.0.2.10:1880/solar/computed",
+      "targetBlank": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Solar plant one-line\n\nNumbers are the Node-RED cache (`solarComputedLast`), scraped as `solar_plant_watts` / `solar_plant_panel_watts`. Green cards are device clamps. Amber cards are estimates (KU MPPT 2/3, PWM, panel halves, equal share).\n\nArrow direction follows the sign of the bound series when the wire says so (jumper, shunt): positive = forward, negative = reverse, zero = no arrow. Other wires are fixed forward. Grafana Canvas does not document particle animation, so there is none.\n\nH5082 sockets are `solar_plant_socket` (on=1, off=0). **Dump sockets** are Use=dump. **Manual sockets** are Use=normal. Where and Load are the text from Site solar. This table does not calculate watts.\n"
+      },
+      "transparent": true
+    },
+    {
+      "id": 2,
+      "type": "canvas",
+      "title": "Plant",
+      "gridPos": {
+        "h": 36,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "solar_plant_watts",
+          "legendFormat": "{{series}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "solar_plant_panel_watts",
+          "legendFormat": "{{panel}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "decimals": 1,
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "inlineEditing": false,
+        "showAdvancedTypes": false,
+        "panZoom": true,
+        "infinitePan": false,
+        "root": {
+          "type": "frame",
+          "name": "Frame",
+          "background": {
+            "color": {
+              "fixed": "#0f1419"
+            }
+          },
+          "elements": [
+            {
+              "name": "lane-t2",
+              "type": "text",
+              "config": {
+                "align": "left",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "T2 bus — device clamps (panels 1+2 are half-string estimates)",
+                  "field": ""
+                },
+                "size": 14
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 16,
+                "top": 8,
+                "width": 640,
+                "height": 28,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P1 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "P1",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 16,
+                "top": 40,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P1",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "P1"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 16,
+                "top": 58,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "T2 MPPT",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "P2 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "P2",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 180,
+                "top": 40,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P2",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "P2"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 180,
+                "top": 58,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "T2 MPPT",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "T2 MPPT label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "T2 MPPT",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 360,
+                "top": 40,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "T2 MPPT",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "t2_mppt_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#14352c"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 360,
+                "top": 58,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "Batt 1",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#3dd68c"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "T2 charge label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "T2 charge",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 360,
+                "top": 112,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "T2 charge",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "t2_mppt_charge_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#14352c"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 360,
+                "top": 130,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Batt 1 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Batt 1",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 560,
+                "top": 40,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Batt 1",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "battery_1_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#14352c"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 560,
+                "top": 58,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 0,
+                    "y": -1
+                  },
+                  "target": {
+                    "x": 0,
+                    "y": 1
+                  },
+                  "targetName": "Batt 2",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#7eb6ff"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "field",
+                    "fixed": "forward",
+                    "field": "t2_ku_jumper_w"
+                  }
+                },
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "T2 shunt sign",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#3dd68c"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "field",
+                    "fixed": "forward",
+                    "field": "battery_1_w"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Jumper label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Jumper",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 560,
+                "top": 112,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Jumper",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "t2_ku_jumper_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#1a2740"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 560,
+                "top": 130,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "T2 shunt sign",
+              "type": "text",
+              "config": {
+                "align": "left",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "+ charge into T2 pack",
+                  "field": ""
+                },
+                "size": 14
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 760,
+                "top": 48,
+                "width": 240,
+                "height": 28,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "lane-ku",
+              "type": "text",
+              "config": {
+                "align": "left",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "KU bus — MPPT 2/3 and PWM are estimates, not clamps",
+                  "field": ""
+                },
+                "size": 14
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 16,
+                "top": 200,
+                "width": 520,
+                "height": 28,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P3 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "P3",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 16,
+                "top": 236,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P3",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "P3"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 16,
+                "top": 254,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "KU MPPT 2+3 est",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "P4 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "P4",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 180,
+                "top": 236,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P4",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "P4"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 180,
+                "top": 254,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "KU MPPT 2+3 est",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "P5 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "P5",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 16,
+                "top": 308,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P5",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "P5"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 16,
+                "top": 326,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "KU MPPT 2+3 est",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "P6 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "P6",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 180,
+                "top": 308,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P6",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "P6"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 180,
+                "top": 326,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "KU MPPT 2+3 est",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "KU MPPT 2+3 est label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "KU MPPT 2+3 est",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 360,
+                "top": 260,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "KU MPPT 2+3 est",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "ku_victron_mppt23_est_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 360,
+                "top": 278,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "Batt 2",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "P7 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "P7",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 16,
+                "top": 392,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P7",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "P7"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 16,
+                "top": 410,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "KU PWM est",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "P8 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "P8",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 180,
+                "top": 392,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "P8",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "P8"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 180,
+                "top": 410,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "KU PWM est",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "KU PWM est label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "KU PWM est",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 360,
+                "top": 392,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "KU PWM est",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "ku_pwm_est_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 360,
+                "top": 410,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "Batt 2",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#e0b050"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Batt 2 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Batt 2",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 560,
+                "top": 300,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Batt 2",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "battery_2_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#14352c"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 560,
+                "top": 318,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "Trailer AC",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#3dd68c"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                },
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "KU shunt sign",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#3dd68c"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "field",
+                    "fixed": "forward",
+                    "field": "battery_2_w"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "KU shunt sign",
+              "type": "text",
+              "config": {
+                "align": "left",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "+ charge into KU pack",
+                  "field": ""
+                },
+                "size": 14
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 760,
+                "top": 300,
+                "width": 240,
+                "height": 28,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "KU equal share label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "KU equal share",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 360,
+                "top": 470,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "KU equal share",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "ku_charger_equal_share_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 360,
+                "top": 488,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "KU combined est label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "KU combined est",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 560,
+                "top": 470,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "KU combined est",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "ku_pwm_mppt_combined_est_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 560,
+                "top": 488,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Trailer AC label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Trailer AC",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 760,
+                "top": 392,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Trailer AC",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "trailer_outlet_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#14352c"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 760,
+                "top": 410,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "EM16 A3",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#3dd68c"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "EM16 A3 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "EM16 A3",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 940,
+                "top": 320,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "EM16 A3",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "em16_a3_live_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#14352c"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 940,
+                "top": 338,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "Sungold AC in",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#3dd68c"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "EM16 B3 label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "EM16 B3",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 940,
+                "top": 392,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "EM16 B3",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "em16_b3_live_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#14352c"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 940,
+                "top": 410,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "Sungold AC in",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#3dd68c"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "lane-sg",
+              "type": "text",
+              "config": {
+                "align": "left",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Sungold cart — not on the T2/KU DC bus",
+                  "field": ""
+                },
+                "size": 14
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 940,
+                "top": 16,
+                "width": 460,
+                "height": 28,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Sungold PV label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Sungold PV",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 940,
+                "top": 48,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Sungold PV",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "sungold_pv_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#1e2a3a"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 940,
+                "top": 66,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "Sungold batt in",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#3dd68c"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Sungold batt in label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Sungold batt in",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 1120,
+                "top": 48,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Sungold batt in",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "sungold_batt_in_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#1e2a3a"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 1120,
+                "top": 66,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Sungold AC in label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Sungold AC in",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 1120,
+                "top": 250,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Sungold AC in",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "sungold_ac_in_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#1e2a3a"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 1120,
+                "top": 268,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": [
+                {
+                  "source": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "target": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "targetName": "Sungold AC out",
+                  "path": "straight",
+                  "color": {
+                    "fixed": "#3dd68c"
+                  },
+                  "size": {
+                    "mode": "fixed",
+                    "fixed": 3,
+                    "min": 1,
+                    "max": 10
+                  },
+                  "direction": {
+                    "mode": "fixed",
+                    "fixed": "forward"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Sungold AC out label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Sungold AC out",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 1300,
+                "top": 250,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Sungold AC out",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "sungold_ac_out_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#14352c"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 1300,
+                "top": 268,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Cart to AC out label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Cart to AC out",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 1300,
+                "top": 330,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Cart to AC out",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "sungold_cart_to_load_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#3d3214"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 1300,
+                "top": 348,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "lane-site",
+              "type": "text",
+              "config": {
+                "align": "left",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Site totals — computed in Node-RED, not extra clamps",
+                  "field": ""
+                },
+                "size": 14
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 16,
+                "top": 560,
+                "width": 520,
+                "height": 28,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Site solar label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Site solar",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 16,
+                "top": 596,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Site solar",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "site_solar_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#1a2740"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 16,
+                "top": 614,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Site source label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Site source",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 180,
+                "top": 596,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Site source",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "site_source_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#1a2740"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 180,
+                "top": 614,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Site load label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Site load",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 344,
+                "top": 596,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Site load",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "site_total_load_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#1a2740"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 344,
+                "top": 614,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Unaccounted label",
+              "type": "text",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#c5d0dc"
+                },
+                "text": {
+                  "mode": "fixed",
+                  "fixed": "Unaccounted",
+                  "field": ""
+                },
+                "size": 12
+              },
+              "background": {
+                "color": {
+                  "fixed": "transparent"
+                }
+              },
+              "border": {
+                "width": 0
+              },
+              "placement": {
+                "left": 508,
+                "top": 596,
+                "width": 150,
+                "height": 18,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            },
+            {
+              "name": "Unaccounted",
+              "type": "metric-value",
+              "config": {
+                "align": "center",
+                "valign": "middle",
+                "color": {
+                  "fixed": "#e7eef5"
+                },
+                "text": {
+                  "mode": "field",
+                  "fixed": "",
+                  "field": "load_unaccounted_w"
+                },
+                "size": 16
+              },
+              "background": {
+                "color": {
+                  "fixed": "#1a2740"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "#31414e"
+                },
+                "width": 1
+              },
+              "placement": {
+                "left": 508,
+                "top": 614,
+                "width": 150,
+                "height": 44,
+                "rotation": 0
+              },
+              "constraint": {
+                "vertical": "top",
+                "horizontal": "left"
+              },
+              "connections": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Dump sockets",
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "solar_plant_socket{use=\"dump\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "indexByName": {
+              "plug": 0,
+              "side": 1,
+              "location": 2,
+              "load": 3,
+              "use": 4,
+              "Value": 5
+            },
+            "renameByName": {
+              "plug": "Plug",
+              "side": "Side",
+              "location": "Where",
+              "load": "Load",
+              "use": "Use",
+              "Value": "Power"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Power"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "off",
+                        "color": "red"
+                      },
+                      "1": {
+                        "text": "on",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Manual sockets",
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "solar_plant_socket{use=\"normal\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "indexByName": {
+              "plug": 0,
+              "side": 1,
+              "location": 2,
+              "load": 3,
+              "use": 4,
+              "Value": 5
+            },
+            "renameByName": {
+              "plug": "Plug",
+              "side": "Side",
+              "location": "Where",
+              "load": "Load",
+              "use": "Use",
+              "Value": "Power"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Power"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "off",
+                        "color": "red"
+                      },
+                      "1": {
+                        "text": "on",
+                        "color": "green"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": [
+    "solar",
+    "victron"
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Solar plant one-line",
+  "uid": "solar-plant-oneline",
+  "version": 1
+}

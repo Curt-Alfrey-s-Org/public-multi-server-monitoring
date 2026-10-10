@@ -1,0 +1,8 @@
+# Copy to scrape-targets.yml (mounted in Prometheus) and edit targets.
+# Format: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#file_sd_config
+- targets:
+    - 192.0.2.10:9100
+    - 192.0.2.20:9100
+  labels:
+    job: node-exporter
+    role: example

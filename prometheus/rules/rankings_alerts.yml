@@ -1,0 +1,62 @@
+# Alert Rules for Rankings Bot Production Monitoring
+# Memory usage alerts (HighSystemMemory, HighRedisMemory, ContainerHighMemory)
+# removed 2026-06-25 -- operator disabled high-memory email noise on all hosts.
+# job rankings-bot-api / postgres / redis scrapes are commented in prometheus.yml
+# (no series). Keep blackbox API liveness plus cAdvisor/node alerts that do scrape.
+
+groups:
+  - name: rankings_bot_api
+    interval: 10s
+    rules:
+      - alert: RankingsBotAPIDown
+        expr: probe_success{instance="http://192.0.2.10:8003/api/health"} == 0
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Rankings Bot API is down"
+          description: "Blackbox probe of rankings  :8003/api/health failed for 1h."
+
+  - name: rankings_bot_containers
+    interval: 10s
+    rules:
+      - alert: ContainerHighCPU
+        expr: rate(container_cpu_usage_seconds_total{name=~"rankings-bot.*"}[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} has high CPU usage"
+          description: "Container {{ $labels.name }} CPU usage is {{ $value | humanizePercentage }} (threshold: 80%)"
+
+      - alert: ContainerRestarting
+        # container_start_time_seconds is a gauge (unix start time); changes()
+        # counts restarts in the window. rate() on a gauge is invalid PromQL usage.
+        expr: changes(container_start_time_seconds{name=~"rankings-bot.*"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} is restarting frequently"
+          description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last 15 minutes"
+
+  - name: rankings_bot_system
+    interval: 10s
+    rules:
+      - alert: HighSystemCPU
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system CPU usage"
+          description: "System CPU usage is {{ $value }}% (threshold: 80%)"
+
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space available is {{ $value }}% (threshold: 15%)"

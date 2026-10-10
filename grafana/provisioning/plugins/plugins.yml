@@ -1,0 +1,5 @@
+# Stops Grafana from logging "no such file" for provisioning/plugins on startup.
+# Add plugin entries here only if you want version-pinned installs via provisioning.
+apiVersion: 1
+
+plugins: []
