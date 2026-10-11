@@ -1,19 +1,31 @@
 # Multi-server monitoring (public snapshot)
 
-Docker Compose stack: Prometheus, Grafana, Alertmanager, blackbox, Loki, and optional
-exporters. This repository is a scrubbed snapshot; see `docs/PUBLIC_SNAPSHOT.md`.
+Docker Compose stack. Services in `docker-compose.yml`:
+
+| Service | Host port |
+|---------|-----------|
+| Prometheus | 9092 |
+| Grafana | 3000 |
+| Alertmanager | 9093 |
+| Blackbox exporter | 9115 |
+| Loki | 3100 |
+| Alloy | 12345 |
+| cAdvisor | 8081 |
+| IPMI exporter | 9290 |
+| Dozzle | 8888 |
+| Node exporter | none (compose network only) |
+
+Scrubbed snapshot: see `docs/PUBLIC_SNAPSHOT.md`.
 
 ## Configure before you run
 
-1. Copy `config/hosts.example.env` to `config/hosts.env` and set your host roles (do not commit `hosts.env`).
-2. Copy `.env.example` to `.env` and set **`GRAFANA_ADMIN_PASSWORD=change-me`** (change before exposing port 3000).
-3. Copy `config/scrape-targets.example.yml` to the path mounted as `/etc/prometheus/scrape-targets.yml` in `docker-compose.yml` (or edit the example in place for a lab).
+1. Copy `config/hosts.example.env` to `config/hosts.env`. Do not commit `hosts.env`.
+2. Copy `.env.example` to `.env`. Set a Grafana admin password before anyone else can open port 3000. Do not commit `.env`.
+3. Copy `config/scrape-targets.example.yml` to the host file that compose mounts at `/etc/prometheus/scrape-targets.yml`.
 
-## Adding a host
+## Add a host
 
-Add one `<host>:<port>` entry under **`targets`** in the file referenced by **`file_sd_configs`**
-in `prometheus/prometheus.yml` (default: `config/scrape-targets.example.yml`). That edit is the
-only inventory change required for a new scrape target.
+Prometheus reads targets from `file_sd_configs` in `prometheus/prometheus.yml` (mounted file `/etc/prometheus/scrape-targets.yml`). Add one `host:port` entry under `targets`. That file is the whole inventory change.
 
 ## Run
 
@@ -21,7 +33,4 @@ only inventory change required for a new scrape target.
 docker compose up -d
 ```
 
-Change the Grafana admin password before exposing the UI to any untrusted network.
-
-See `docs/PUBLIC_SNAPSHOT.md`, `SERVER_STACKS.md`, and `PORTS.md` for stack layout.
-
+Change the Grafana admin password before exposing the UI.
